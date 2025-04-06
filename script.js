@@ -1,50 +1,40 @@
 document.getElementById('messageForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const content = document.getElementById('messageContent').value.trim();
+    const content = document.getElementById('messageContent').value;
 
-    if (!content) {
-        alert('Message content cannot be empty!');
-        return;
-    }
+    // Kirim pesan ke backend
+    const response = await fetch('http://localhost:5000/api/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content }),
+    });
 
-    try {
-        const response = await fetch('/api/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ content }),
-        });
-
-        if (response.ok) {
-            document.getElementById('messageContent').value = '';
-            loadMessages();
-        } else {
-            alert('Failed to send message. Please try again.');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred. Please check your connection.');
+    if (response.ok) {
+        const messagesDiv = document.getElementById('messages');
+        const newMessage = document.createElement('div');
+        newMessage.textContent = content;
+        messagesDiv.appendChild(newMessage);
+        document.getElementById('messageContent').value = '';
+    } else {
+        console.error('Gagal mengirim pesan');
     }
 });
 
-async function loadMessages() {
-    try {
-        const response = await fetch('/api/messages');
-        if (!response.ok) {
-            throw new Error('Failed to fetch messages');
-        }
-        const messages = await response.json();
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = ''; // Clear existing messages
+// Fungsi untuk mengambil dan menampilkan pesan
+async function fetchMessages() {
+    const response = await fetch('http://localhost:5000/api/messages');
+    const messages = await response.json();
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.innerHTML = ''; // Kosongkan div sebelum menambahkan pesan baru
 
-        messages.forEach((message) => {
-            const messageElement = document.createElement('div');
-            messageElement.textContent = message.content;
-            messagesDiv.appendChild(messageElement);
-        });
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to load messages. Please try again.');
-    }
+    messages.forEach(message => {
+        const messageElement = document.createElement('div');
+        messageElement.textContent = message.content;
+        messagesDiv.appendChild(messageElement);
+    });
 }
+
+// Panggil fungsi untuk mengambil pesan saat halaman dimuat
+fetchMessages();
